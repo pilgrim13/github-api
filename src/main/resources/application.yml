@@ -6,9 +6,24 @@ logging:
     org.springframework.web: INFO
 
 spring:
-#  profiles:
-#    include: secret
-
+  profiles:
+    include: secret
   output:
     ansi:
       enabled: ALWAYS
+
+# Feign 전역 설정
+feign:
+  client:
+    config:
+      default:
+        # 연결·읽기 타임아웃 (ms)
+        connectTimeout: 5000
+        readTimeout: 5000
+        # 로깅 레벨 (BASIC, FULL 등)
+        loggerLevel: BASIC
+
+# GitHub API 기본 URL
+github:
+  api:
+    url: https://api.github.com
