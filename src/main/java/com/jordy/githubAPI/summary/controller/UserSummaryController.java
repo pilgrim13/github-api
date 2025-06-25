@@ -22,7 +22,7 @@ public class UserSummaryController {
      * @return 사용자 프로필 요약 응답 객체
      */
     @GetMapping("/{username}/profile-summary")
-    public UserProfileSummaryResponse getProfileSummary(@PathVariable String username) {
+    public UserProfileSummaryResponse getProfileSummary(@PathVariable("username") String username) {
         return userSummaryService.getUserProfileSummary(username);
     }
 }
