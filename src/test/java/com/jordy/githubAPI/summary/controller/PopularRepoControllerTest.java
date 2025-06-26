@@ -1,8 +1,8 @@
 package com.jordy.githubAPI.summary.controller;
 
 import com.jordy.githubAPI.common.exception.ErrorCode;
-import com.jordy.githubAPI.summary.dto.RepoSummaryResponse;
-import com.jordy.githubAPI.summary.service.RepoSummaryService;
+import com.jordy.githubAPI.summary.dto.PopularRepoResponse;
+import com.jordy.githubAPI.summary.service.PopularRepoService;
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
@@ -21,54 +21,57 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// 웹 계층 테스트. RepoSummaryController 대상.
-@WebMvcTest(RepoSummaryController.class)
-class RepoSummaryControllerTest {
+// 웹 계층 테스트. PopularRepoController 대상.
+@WebMvcTest(PopularRepoController.class)
+class PopularRepoControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     // 컨트롤러가 의존하는 서비스 Mocking
     @MockBean
-    private RepoSummaryService repoSummaryService;
+    private PopularRepoService popularRepoService;
 
     @Test
-    @DisplayName("저장소 활동 요약 조회 성공")
-    void getRepoSummary_Success() throws Exception {
+    @DisplayName("조직의 인기 저장소 목록 조회 성공")
+    void getPopularRepos_Success() throws Exception {
         // given
-        String owner = "octocat";
-        String repo = "Spoon-Knife";
-        RepoSummaryResponse mockResponse = RepoSummaryResponse.builder()
-                .owner(owner)
-                .repo(repo)
+        String owner = "apache";
+        int limit = 5;
+        PopularRepoResponse mockResponse = PopularRepoResponse.builder()
+                .targetOwner(owner)
                 .build();
 
         // 서비스 동작 Mocking: 성공 응답 설정
-        given(repoSummaryService.getRepoSummary(owner, repo)).willReturn(mockResponse);
+        given(popularRepoService.getPopularRepos(owner, limit)).willReturn(mockResponse);
 
         // when & then
-        mockMvc.perform(get("/api/repos/{owner}/{repo}/summary", owner, repo))
+        mockMvc.perform(get("/api/popular-repo")
+                        .param("owner", owner)
+                        .param("limit", String.valueOf(limit)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.owner").value(owner))
-                .andExpect(jsonPath("$.repo").value(repo))
+                // DTO의 @JsonProperty("target_owner")에 맞게 jsonPath를 수정
+                .andExpect(jsonPath("$.target_owner").value(owner))
                 .andDo(print());
     }
 
     @Test
-    @DisplayName("존재하지 않는 저장소를 조회하면 404 에러를 반환한다")
-    void getRepoSummary_Fail_RepoNotFound() throws Exception {
+    @DisplayName("존재하지 않는 조직을 조회하면 404 에러를 반환한다")
+    void getPopularRepos_Fail_OrgNotFound() throws Exception {
         // given
-        String owner = "non-exist-owner";
-        String repo = "non-exist-repo";
-        ErrorCode expectedError = ErrorCode.USER_NOT_FOUND; // 또는 REPO_NOT_FOUND
+        String owner = "non-exist-organization";
+        int limit = 10;
+        ErrorCode expectedError = ErrorCode.USER_NOT_FOUND; // 현재 핸들러는 USER_NOT_FOUND를 반환
 
         // Mocking: FeignException.NotFound 예외 발생 설정
         Request request = Request.create(Request.HttpMethod.GET, "/", Collections.emptyMap(), null, new RequestTemplate());
-        given(repoSummaryService.getRepoSummary(owner, repo))
+        given(popularRepoService.getPopularRepos(owner, limit))
                 .willThrow(new FeignException.NotFound("Not Found", request, null, null));
 
         // when & then
-        mockMvc.perform(get("/api/repos/{owner}/{repo}/summary", owner, repo))
+        mockMvc.perform(get("/api/popular-repo")
+                        .param("owner", owner)
+                        .param("limit", String.valueOf(limit)))
                 // HTTP Status 404 검증
                 .andExpect(status().isNotFound())
                 // ErrorResponse 내용 검증

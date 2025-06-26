@@ -5,6 +5,7 @@ import com.jordy.githubAPI.github.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -36,5 +37,13 @@ public interface GithubApiClient {
     // 커밋 목록 (수량 및 최신 날짜 파악용)
     @GetMapping("/repos/{owner}/{repo}/commits?per_page=100")
     List<GithubCommitResponse> getRepoCommits(@PathVariable("owner") String owner, @PathVariable("repo") String repo);
+
+    // 특정 조직의 상세 정보를 조회
+    @GetMapping("/orgs/{org}")
+    GithubOrgDetailResponse getOrgDetails(@PathVariable("org") String org);
+
+    //특정 조직의 저장소 목록을 스타 순으로 정렬하여 조회
+    @GetMapping("/orgs/{org}/repos?sort=stars")
+    List<GithubOrgRepoResponse> getPopularOrgRepos(@PathVariable("org") String org, @RequestParam("per_page") int limit);
 
 }
