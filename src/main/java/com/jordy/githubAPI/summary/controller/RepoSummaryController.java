@@ -16,7 +16,7 @@ public class RepoSummaryController {
     private final RepoSummaryService repoSummaryService;
 
     @GetMapping("/{owner}/{repo}/summary")
-    public RepoSummaryResponse getRepoSummary(@PathVariable String owner, @PathVariable String repo) {
+    public RepoSummaryResponse getRepoSummary(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
         return repoSummaryService.getRepoSummary(owner, repo);
     }
 }
