@@ -1,8 +1,11 @@
 package com.jordy.githubAPI.summary.service;
 
+import com.jordy.githubAPI.common.exception.BusinessException;
+import com.jordy.githubAPI.common.exception.ErrorCode;
 import com.jordy.githubAPI.github.client.GithubApiClient;
 import com.jordy.githubAPI.github.dto.*;
 import com.jordy.githubAPI.summary.dto.*;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,26 +28,32 @@ public class RepoSummaryService {
     private final GithubApiClient githubApiClient;
 
     public RepoSummaryResponse getRepoSummary(String owner, String repo) {
-        // Github 데이터 조회
-        GithubRepoDetailResponse repoDetails = githubApiClient.getRepoDetails(owner, repo);
-        List<GithubIssueResponse> issues = githubApiClient.getRepoIssues(owner, repo);
-        List<GithubPullRequestResponse> pullRequests = githubApiClient.getRepoPullRequests(owner, repo);
-        List<GithubBranchResponse> branches = githubApiClient.getRepoBranches(owner, repo);
-        List<GithubCommitResponse> commits = githubApiClient.getRepoCommits(owner, repo);
+        try {
+            // Github 데이터 조회
+            GithubRepoDetailResponse repoDetails = githubApiClient.getRepoDetails(owner, repo);
+            List<GithubIssueResponse> issues = githubApiClient.getRepoIssues(owner, repo);
+            List<GithubPullRequestResponse> pullRequests = githubApiClient.getRepoPullRequests(owner, repo);
+            List<GithubBranchResponse> branches = githubApiClient.getRepoBranches(owner, repo);
+            List<GithubCommitResponse> commits = githubApiClient.getRepoCommits(owner, repo);
 
-        // 데이터 가공 및 통계 계산
-        RepoInfo repoInfo = getRepoInfo(repoDetails, branches, commits);
-        IssueStats issueStats = getIssueStats(issues);
-        PullRequestStats prStats = getPullRequestStats(pullRequests);
+            // 데이터 가공 및 통계 계산
+            RepoInfo repoInfo = getRepoInfo(repoDetails, branches, commits);
+            IssueStats issueStats = getIssueStats(issues);
+            PullRequestStats prStats = getPullRequestStats(pullRequests);
 
-        return RepoSummaryResponse.builder()
-                .owner(owner)
-                .repo(repo)
-                .repoInfo(repoInfo)
-                .issueStats(issueStats)
-                .pullRequestStats(prStats)
-                .lastUpdatedUtc(LocalDateTime.now())
-                .build();
+            return RepoSummaryResponse.builder()
+                    .owner(owner)
+                    .repo(repo)
+                    .repoInfo(repoInfo)
+                    .issueStats(issueStats)
+                    .pullRequestStats(prStats)
+                    .lastUpdatedUtc(LocalDateTime.now())
+                    .build();
+        } catch (FeignException.NotFound e) {
+            // Feign 404 에러를 REPOSITORY_NOT_FOUND 비즈니스 예외로 전환
+            throw new BusinessException(ErrorCode.REPOSITORY_NOT_FOUND);
+        }
+
     }
 
     /**

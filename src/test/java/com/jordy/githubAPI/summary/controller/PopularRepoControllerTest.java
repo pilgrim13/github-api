@@ -1,5 +1,6 @@
 package com.jordy.githubAPI.summary.controller;
 
+import com.jordy.githubAPI.common.exception.BusinessException;
 import com.jordy.githubAPI.common.exception.ErrorCode;
 import com.jordy.githubAPI.summary.dto.PopularRepoResponse;
 import com.jordy.githubAPI.summary.service.PopularRepoService;
@@ -13,7 +14,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,14 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// 웹 계층 테스트. PopularRepoController 대상.
 @WebMvcTest(PopularRepoController.class)
 class PopularRepoControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    // 컨트롤러가 의존하는 서비스 Mocking
     @MockBean
     private PopularRepoService popularRepoService;
 
@@ -36,7 +37,7 @@ class PopularRepoControllerTest {
     @DisplayName("조직의 인기 저장소 목록 조회 성공")
     void getPopularRepos_Success() throws Exception {
         // given
-        String owner = "apache";
+        String owner = "microsoft";
         int limit = 5;
         PopularRepoResponse mockResponse = PopularRepoResponse.builder()
                 .targetOwner(owner)
@@ -56,25 +57,48 @@ class PopularRepoControllerTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 조직을 조회하면 404 에러를 반환한다")
+    @DisplayName("존재하지 않는 조직을 조회하면 ORGANIZATION_NOT_FOUND 에러를 반환한다")
     void getPopularRepos_Fail_OrgNotFound() throws Exception {
         // given
         String owner = "non-exist-organization";
         int limit = 10;
-        ErrorCode expectedError = ErrorCode.USER_NOT_FOUND; // 현재 핸들러는 USER_NOT_FOUND를 반환
+        // 기대하는 에러 코드를 ORGANIZATION_NOT_FOUND로 변경
+        ErrorCode expectedError = ErrorCode.ORGANIZATION_NOT_FOUND;
 
-        // Mocking: FeignException.NotFound 예외 발생 설정
-        Request request = Request.create(Request.HttpMethod.GET, "/", Collections.emptyMap(), null, new RequestTemplate());
+        // Mocking: BusinessException 발생 설정
         given(popularRepoService.getPopularRepos(owner, limit))
-                .willThrow(new FeignException.NotFound("Not Found", request, null, null));
+                .willThrow(new BusinessException(expectedError));
 
         // when & then
         mockMvc.perform(get("/api/popular-repo")
                         .param("owner", owner)
                         .param("limit", String.valueOf(limit)))
-                // HTTP Status 404 검증
                 .andExpect(status().isNotFound())
-                // ErrorResponse 내용 검증
+                .andExpect(jsonPath("$.code").value(expectedError.getCode()))
+                .andExpect(jsonPath("$.message").value(expectedError.getMessage()))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("API 요청 횟수 제한 초과 시 403 에러를 반환한다")
+    void getPopularRepos_Fail_RateLimitExceeded() throws Exception {
+        // given
+        String owner = "apache";
+        int limit = 5;
+        ErrorCode expectedError = ErrorCode.API_RATE_LIMIT_EXCEEDED;
+
+        // Mocking: Rate Limit 초과 상황을 재현하기 위해 응답 헤더를 포함하여 예외를 생성
+        Request request = Request.create(Request.HttpMethod.GET, "/", Collections.emptyMap(), null, new RequestTemplate());
+        Map<String, Collection<String>> headers = Collections.singletonMap("x-ratelimit-remaining", Collections.singleton("0"));
+
+        given(popularRepoService.getPopularRepos(owner, limit))
+                .willThrow(new FeignException.Forbidden("Forbidden", request, null, headers));
+
+        // when & then
+        mockMvc.perform(get("/api/popular-repo")
+                        .param("owner", owner)
+                        .param("limit", String.valueOf(limit)))
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(expectedError.getCode()))
                 .andExpect(jsonPath("$.message").value(expectedError.getMessage()))
                 .andDo(print());

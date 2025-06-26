@@ -1,10 +1,13 @@
 package com.jordy.githubAPI.summary.service;
 
+import com.jordy.githubAPI.common.exception.BusinessException;
+import com.jordy.githubAPI.common.exception.ErrorCode;
 import com.jordy.githubAPI.github.client.GithubApiClient;
 import com.jordy.githubAPI.github.dto.GithubRepoResponse;
 import com.jordy.githubAPI.github.dto.GithubUserResponse;
 import com.jordy.githubAPI.summary.dto.LanguageStat;
 import com.jordy.githubAPI.summary.dto.UserProfileSummaryResponse;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,10 +24,15 @@ public class UserSummaryService {
     private final GithubApiClient githubApiClient;
 
     public UserProfileSummaryResponse getUserProfileSummary(String username) {
-        GithubUserResponse user = githubApiClient.getUser(username);
-        List<GithubRepoResponse> repoList = githubApiClient.getUserRepos(username);
-        List<LanguageStat> languageStatList = getLanguageStats(repoList);
-        return UserProfileSummaryResponse.from(user, languageStatList);
+        try {
+            GithubUserResponse user = githubApiClient.getUser(username);
+            List<GithubRepoResponse> repos = githubApiClient.getUserRepos(username);
+            List<LanguageStat> languageStats = getLanguageStats(repos);
+            return UserProfileSummaryResponse.from(user, languageStats);
+        } catch (FeignException.NotFound e) {
+            // Feign 404 에러를 잡아서 USER_NOT_FOUND 비즈니스 예외로 전환
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
     }
 
     private List<LanguageStat> getLanguageStats(List<GithubRepoResponse> repos) {
