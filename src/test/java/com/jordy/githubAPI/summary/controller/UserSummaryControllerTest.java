@@ -1,7 +1,7 @@
 package com.jordy.githubAPI.summary.controller;
 
 import com.jordy.githubAPI.common.exception.ErrorCode;
-import com.jordy.githubAPI.summary.UserSummaryService;
+import com.jordy.githubAPI.summary.service.UserSummaryService;
 import com.jordy.githubAPI.summary.dto.UserProfileSummaryResponse;
 import feign.FeignException;
 import feign.Request;

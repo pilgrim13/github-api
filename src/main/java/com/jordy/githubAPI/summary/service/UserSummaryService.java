@@ -1,4 +1,4 @@
-package com.jordy.githubAPI.summary;
+package com.jordy.githubAPI.summary.service;
 
 import com.jordy.githubAPI.github.client.GithubApiClient;
 import com.jordy.githubAPI.github.dto.GithubRepoResponse;
@@ -23,11 +23,11 @@ public class UserSummaryService {
     public UserProfileSummaryResponse getUserProfileSummary(String username) {
         GithubUserResponse user = githubApiClient.getUser(username);
         List<GithubRepoResponse> repoList = githubApiClient.getUserRepos(username);
-        List<LanguageStat> languageStatList = getLanguageStatList(repoList);
+        List<LanguageStat> languageStatList = getLanguageStats(repoList);
         return UserProfileSummaryResponse.from(user, languageStatList);
     }
 
-    private List<LanguageStat> getLanguageStatList(List<GithubRepoResponse> repos) {
+    private List<LanguageStat> getLanguageStats(List<GithubRepoResponse> repos) {
         List<String> languageList = repos.stream()
                 .map(GithubRepoResponse::getLanguage)
                 .filter(Objects::nonNull)
