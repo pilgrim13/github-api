@@ -1,0 +1,13 @@
+services:
+  # 서비스 이름
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # .env 파일에 정의된 GITHUB_TOKEN 값 사용
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    container_name: github-api-server
+    ports:
+      - "8080:8080"
+    restart: always
