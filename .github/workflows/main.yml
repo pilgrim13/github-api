@@ -8,6 +8,8 @@ on:
   # master 브랜치로 pull request 이벤트가 발생했을 때
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
+
 
 jobs:
   # 서비스 빌드 단계
