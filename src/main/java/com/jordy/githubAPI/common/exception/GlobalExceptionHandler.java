@@ -7,12 +7,34 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Collection;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * @RequestParam, @PathVariable 등에서 타입 변환 실패 시 발생하는 예외 처리
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    protected ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.error("Method Argument Type Mismatch", e);
+        final ErrorResponse response = new ErrorResponse(ErrorCode.INVALID_INPUT_VALUE);
+        return new ResponseEntity<>(response, ErrorCode.INVALID_INPUT_VALUE.getStatus());
+    }
+
+    /**
+     * Feign Client에서 발생하는 5xx 서버 에러를 처리
+     * 외부 API 서버가 불안정할 때 발생
+     */
+    @ExceptionHandler({FeignException.ServiceUnavailable.class, FeignException.InternalServerError.class})
+    protected ResponseEntity<ErrorResponse> handleFeignServerException(FeignException e) {
+        log.error("Github Server Exception", e);
+        final ErrorResponse response = new ErrorResponse(ErrorCode.EXTERNAL_API_UNAVAILABLE);
+        return new ResponseEntity<>(response, ErrorCode.EXTERNAL_API_UNAVAILABLE.getStatus());
+    }
 
     /**
      * Feign Client에서 발생하는 403 Forbidden 예외를 처리

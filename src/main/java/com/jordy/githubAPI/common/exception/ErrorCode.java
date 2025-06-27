@@ -22,7 +22,10 @@ public enum ErrorCode {
     ORGANIZATION_NOT_FOUND(HttpStatus.NOT_FOUND, "org.01", "해당 조직을 찾을 수 없습니다."),
 
     // 500 Internal Server Error
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "common.99", "서버에 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "common.99", "서버에 오류가 발생했습니다."),
+
+    // 503 Service Unavailable
+    EXTERNAL_API_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "external.01","외부 API를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;

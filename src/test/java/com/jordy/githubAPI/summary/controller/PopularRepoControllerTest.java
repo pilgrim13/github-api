@@ -103,4 +103,49 @@ class PopularRepoControllerTest {
                 .andExpect(jsonPath("$.message").value(expectedError.getMessage()))
                 .andDo(print());
     }
+
+    @Test
+    @DisplayName("잘못된 타입의 파라미터 입력 시 400 에러를 반환한다")
+    void getPopularRepos_Fail_InvalidInputType() throws Exception {
+        // given
+        String owner = "apache";
+        String invalidLimit = "abc"; // int 타입이어야 할 자리에 문자열 입력
+        ErrorCode expectedError = ErrorCode.INVALID_INPUT_VALUE;
+
+        // when & then
+        mockMvc.perform(get("/api/popular-repo")
+                        .param("owner", owner)
+                        .param("limit", invalidLimit)) // 잘못된 타입의 파라미터 전달
+                // HTTP Status 400 검증
+                .andExpect(status().isBadRequest())
+                // ErrorResponse 내용 검증
+                .andExpect(jsonPath("$.code").value(expectedError.getCode()))
+                .andExpect(jsonPath("$.message").value(expectedError.getMessage()))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("외부 API 서버 오류 발생 시 503 에러를 반환한다")
+    void getPopularRepos_Fail_ExternalApiDown() throws Exception {
+        // given
+        String owner = "apache";
+        int limit = 5;
+        ErrorCode expectedError = ErrorCode.EXTERNAL_API_UNAVAILABLE;
+
+        // Mocking: FeignException.ServiceUnavailable (503) 예외 발생 설정
+        Request dummyRequest = Request.create(Request.HttpMethod.GET, "/", Collections.emptyMap(), null, new RequestTemplate());
+        given(popularRepoService.getPopularRepos(owner, limit))
+                .willThrow(new FeignException.ServiceUnavailable("Service Unavailable", dummyRequest, null, null));
+
+        // when & then
+        mockMvc.perform(get("/api/popular-repo")
+                        .param("owner", owner)
+                        .param("limit", String.valueOf(limit)))
+                // HTTP Status 503 검증
+                .andExpect(status().isServiceUnavailable())
+                // ErrorResponse 내용 검증
+                .andExpect(jsonPath("$.code").value(expectedError.getCode()))
+                .andExpect(jsonPath("$.message").value(expectedError.getMessage()))
+                .andDo(print());
+    }
 }
