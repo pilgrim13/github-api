@@ -1,4 +1,4 @@
-## GitHub 분석 서비스 API
+# GitHub 분석 서비스 API
 
 특정 GitHub 사용자, 저장소, 조직의 활동 내역을 분석하고 요약된 정보를 제공하는 RESTful API 서비스
 
@@ -18,45 +18,58 @@
     * Lombok
     * Springdoc-openapi-ui (Swagger)
 * **빌드 도구**: Gradle 8.10
+* **CI/CD**: GitHub Actions, Docker, Docker Compose
 
-## 🚀 환경
+## 🚀 로컬 환경 설정 및 실행
 
 ### 사전 준비
 
-
 1.  **Java 17**
-2.  **GitHub 개인용 액세스 토큰 (PAT) 생성 및 설정**: GitHub API 요청 인증을 위해 PAT가 필요
+2.  **GitHub 개인용 액세스 토큰 (PAT) 생성 및 설정**: GitHub API 요청 인증을 위해 PAT가 필요합니다.
 
     **a. 토큰 발급 받기**
     * [GitHub 토큰 발급 페이지(Fine-grained tokens)](https://github.com/settings/tokens?type=beta)로 이동하여 `Generate new token` 버튼을 클릭합니다.
     * **Repository access** 항목에서 **`All repositories`** 를 선택합니다.
-    * **Permissions** 항목 > **Repository permissions** 에서 아래 3가지 권한의 Access를 **`Read-only`** 로 설정합니다.
-        * `Contents`
-        * `Issues`
-        * `Pull requests`
-    * `Generate token` 버튼을 눌러 토큰을 생성하고, 생성된 토큰 값을 안전한 곳에 즉시 복사해 둡니다. (이 페이지를 벗어나면 다시 볼 수 없습니다.)
+    * **Permissions** 항목 > **Repository permissions** 에서 아래 3가지 권한의 Access를 **`Read-only`** 로 설정합니다: `Contents`, `Issues`, `Pull requests`
+    * `Generate token` 버튼을 눌러 토큰을 생성하고, 생성된 값을 즉시 복사해 둡니다.
 
     **b. 설정 파일 생성**
     * 프로젝트의 `src/main/resources/` 디렉토리 안에 `application-secret.yml` 파일을 새로 만듭니다.
-    * 생성한 파일에 아래 내용을 복사하여 붙여넣고, 자신의 토큰 값으로 교체합니다.
+    * 아래 내용을 파일에 작성하고, 자신의 토큰 값으로 교체합니다.
 
     ```yaml
     github:
       token: "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # 여기에 발급받은 GitHub PAT를 붙여넣으세요
     ```
-    *이 `application-secret.yml` 파일은 `.gitignore`에 등록되어 있어 Git 저장소에 포함되지 않습니다. 따라서 로컬 환경에서만 사용됩니다.*
+    *이 파일은 `.gitignore`에 등록되어 있어 Git 저장소에 포함되지 않습니다.*
 
 ### 설치 및 실행
 
 #### 방법 1: IntelliJ IDEA 사용 (권장)
 
 1.  **프로젝트 열기**: IntelliJ에서 `File > Open`을 통해 프로젝트 폴더를 엽니다.
-2.  **프로젝트 빌드**:
-    * 우측의 `Gradle` 탭을 엽니다.
-    * `Tasks > build > build`를 더블 클릭하여 프로젝트를 빌드합니다.
-3.  **애플리케이션 실행**:
-    * `src/main/java` 아래의 메인 애플리케이션 파일(`GithubAPIApplication.java`)을 엽니다.
-    * `main` 메소드 옆의 녹색 '실행' 아이콘(▶)을 클릭하여 애플리케이션을 실행합니다.
+2.  **프로젝트 빌드**: 우측 `Gradle` 탭에서 `Tasks > build > build`를 더블 클릭하여 프로젝트를 빌드합니다.
+3.  **애플리케이션 실행**: `src/main/java` 아래의 메인 애플리케이션 파일(`GithubAPIApplication.java`)을 열고, `main` 메소드 옆의 녹색 '실행' 아이콘(▶)을 클릭하여 실행합니다.
+
+---
+
+## 🔁 CI/CD 파이프라인
+
+이 프로젝트는 **GitHub Actions**와 **Docker**를 사용하여 CI/CD 파이프라인을 구축했습니다.
+
+### 파이프라인 흐름
+
+1.  **트리거**: `master` 브랜치에 코드가 `push`되거나 `pull request`가 생성되면 파이프라인이 자동으로 실행됩니다. 또한, Actions 탭에서 수동으로 실행할 수도 있습니다.
+2.  **실행 환경**: 과제 요구사항에 따라, 미리 구성된 **Self-hosted runner**에서 모든 작업이 실행됩니다.
+3.  **작업 순서**:
+    * 소스 코드를 체크아웃합니다.
+    * `./gradlew build` 명령어로 애플리케이션을 빌드하고 모든 단위 테스트를 실행합니다.
+    * `Dockerfile`을 사용하여 애플리케이션을 **Docker 이미지**로 빌드합니다.
+    * `docker compose up -d` 명령어로 최신 이미지를 사용하여 컨테이너를 **자동으로 배포**합니다.
+4.  **민감 정보 관리**: `DOCKERHUB_TOKEN`, `GH_PAT`와 같은 민감 정보는 **GitHub Secrets**를 통해 안전하게 관리되며, 워크플로우 실행 시에만 주입됩니다.
+
+---
+
 ## 📖 API 사용 방법
 
 애플리케이션이 실행 중일 때, 아래 주소로 접속하면 Swagger UI를 통해 모든 API의 명세를 확인하고 직접 테스트해 볼 수 있습니다.
