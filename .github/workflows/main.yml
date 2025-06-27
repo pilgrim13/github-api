@@ -23,6 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Git 커밋 해시를 태그로 사용하기 위한 설정
+      - name: Set Image Tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       # JDK 17 설정
       # runner에 Java 17 환경을 설정
       - name: Set up JDK 17
@@ -60,6 +65,8 @@ jobs:
       - name: Build Docker image
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          # 환경 변수로 이미지 태그 전달
+          IMAGE_TAG: ${{ env.sha_short }}
         run: docker compose build
 
       # Docker 컨테이너 배포
@@ -67,5 +74,7 @@ jobs:
       - name: Deploy with Docker Compose
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          # 환경 변수로 이미지 태그 전달
+          IMAGE_TAG: ${{ env.sha_short }}
         run: docker compose up -d
 
