@@ -41,6 +41,13 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
+      # Docker 자격 증명 헬퍼 비활성화
+      # Self-hosted runner 환경에서 발생하는 credential-desktop 오류를 방지합니다.
+      - name: Create dummy Docker config
+        run: |
+          mkdir -p ~/.docker
+          echo '{"credsStore": ""}' > ~/.docker/config.json
+
       # GitHub Secrets에 저장된 정보를 사용하여 Docker Hub에 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v3
