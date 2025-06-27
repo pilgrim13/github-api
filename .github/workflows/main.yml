@@ -2,12 +2,12 @@ name: Java CI/CD with Gradle
 
 # 워크플로우가 실행될 시점
 on:
-  # main 브랜치에 push 이벤트가 발생했을 때
+  # master 브랜치에 push 이벤트가 발생했을 때
   push:
-    branches: [ "main" ]
-  # main 브랜치로 pull request 이벤트가 발생했을 때
+    branches: [ "master" ]
+  # master 브랜치로 pull request 이벤트가 발생했을 때
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   # 서비스 빌드 단계
