@@ -1,7 +1,7 @@
 services:
   # 서비스 이름
   app:
-    image: ${{ secrets.DOCKERHUB_USERNAME }}/github-api:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USERNAME}/github-api:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
