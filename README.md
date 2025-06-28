@@ -8,6 +8,20 @@
 2.  **저장소 활동 분석 API**: 특정 저장소의 기본 정보, 이슈 및 Pull Request 통계(평균 처리 시간, 상위 기여자 등)를 요약하여 제공
 3.  **인기 저장소 조회 API**: 특정 조직(Organization)이 소유한 공개 저장소들을 스타(Star) 개수 순으로 정렬하여 상위 N개의 목록을 제공
 
+## 📖 API 사용 방법
+
+애플리케이션이 실행 중일 때, 아래 주소로 접속하면 Swagger UI를 통해 모든 API의 명세를 확인하고 직접 테스트해 볼 수 있습니다.
+
+* **Swagger UI 주소**: `http://localhost:8080/swagger-ui.html`
+
+### 엔드포인트 목록
+
+| Method | URL | 설명 |
+| :--- | :--- | :--- |
+| `GET` | `/api/users/{username}/profile-summary` | 사용자 프로필 요약 조회 |
+| `GET` | `/api/repos/{owner}/{repo}/summary` | 저장소 활동 요약 조회 |
+| `GET` | `/api/popular-repo` | 조직의 인기 저장소 목록 조회 |
+
 ## 🛠️ 기술 스택
 
 * **언어**: Java 17
@@ -55,34 +69,34 @@
 
 ## 🔁 CI/CD 파이프라인
 
-이 프로젝트는 **GitHub Actions**와 **Docker**를 사용하여 CI/CD 파이프라인을 구축했습니다.
+이 프로젝트는 **GitHub Actions**와 **Docker**를 사용하여 CI/CD 파이프라인을 구축했습니다. 이 파이프라인을 직접 실행하고 검증해보려면 아래 설정이 필요합니다.
+
+### CI/CD 사용을 위한 사전 준비
+
+워크플로우가 정상적으로 동작하려면, 이 프로젝트를 포크(fork)한 본인의 GitHub 저장소에 아래의 Secret들을 등록해야 합니다.
+
+1.  **GitHub 저장소** > `Settings` > `Secrets and variables` > `Actions` 메뉴로 이동합니다.
+2.  `Repository secrets` 섹션에서 **`New repository secret`** 버튼을 클릭하여 아래 3개의 Secret을 생성합니다.
+
+    | Secret 이름 | 값 | 설명 |
+        | :--- | :--- | :--- |
+    | `DOCKERHUB_USERNAME` | 본인의 Docker Hub 아이디 | Docker Hub 로그인 시 사용됩니다. |
+    | `DOCKERHUB_TOKEN` | Docker Hub Access Token | Docker Hub 로그인 시 비밀번호 대신 사용됩니다. ([여기서 발급](https://hub.docker.com/settings/security)) |
+    | `GH_PAT` | 위의 "사전 준비"에서 발급받은 GitHub PAT | Docker 이미지 빌드 시 환경 변수로 주입됩니다. |
+
+3.  **Self-hosted runner 설정**: 이 파이프라인은 Self-hosted runner에서 실행되도록 설계되었습니다.
+    * `Settings` > `Actions` > `Runners` 메뉴에서 `New self-hosted runner`를 통해 자신의 실행 환경(로컬 PC, 서버 등)에 Runner를 설정하고, 실행시켜 `Listening for Jobs` 상태로 만들어야 합니다.
 
 ### 파이프라인 흐름
 
-1.  **트리거**: `master` 브랜치에 코드가 `push`되거나 `pull request`가 생성되면 파이프라인이 자동으로 실행됩니다. 또한, Actions 탭에서 수동으로 실행할 수도 있습니다.
-2.  **실행 환경**: 과제 요구사항에 따라, 미리 구성된 **Self-hosted runner**에서 모든 작업이 실행됩니다.
-3.  **작업 순서**:
-    * 소스 코드를 체크아웃합니다.
-    * `./gradlew build` 명령어로 애플리케이션을 빌드하고 모든 단위 테스트를 실행합니다.
+1.  **트리거**: `master` 브랜치에 코드가 `push`되거나, GitHub Actions 탭에서 **수동으로 실행**하면 파이프라인이 시작됩니다.
+2.  **작업 순서**:
+    * 소스 코드를 체크아웃하고, `./gradlew build`로 빌드 및 단위 테스트를 실행합니다.
     * `Dockerfile`을 사용하여 애플리케이션을 **Docker 이미지**로 빌드합니다.
     * `docker compose up -d` 명령어로 최신 이미지를 사용하여 컨테이너를 **자동으로 배포**합니다.
-4.  **민감 정보 관리**: `DOCKERHUB_TOKEN`, `GH_PAT`와 같은 민감 정보는 **GitHub Secrets**를 통해 안전하게 관리되며, 워크플로우 실행 시에만 주입됩니다.
 
 ---
 
-## 📖 API 사용 방법
-
-애플리케이션이 실행 중일 때, 아래 주소로 접속하면 Swagger UI를 통해 모든 API의 명세를 확인하고 직접 테스트해 볼 수 있습니다.
-
-* **Swagger UI 주소**: `http://localhost:8080/swagger-ui.html`
-
-### 엔드포인트 목록
-
-| Method | URL | 설명 |
-| :--- | :--- | :--- |
-| `GET` | `/api/users/{username}/profile-summary` | 사용자 프로필 요약 조회 |
-| `GET` | `/api/repos/{owner}/{repo}/summary` | 저장소 활동 요약 조회 |
-| `GET` | `/api/popular-repo` | 조직의 인기 저장소 목록 조회 |
 
 ## ❗ 에러 처리
 
