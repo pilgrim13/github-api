@@ -63,19 +63,15 @@ jobs:
       # Docker 이미지 빌드
       # 이 단계에서 GitHub PATH 를 환경 변수로 주입합니다.
       - name: Build Docker image
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          # 환경 변수로 이미지 태그 전달
-          IMAGE_TAG: ${{ env.sha_short }}
-        run: docker compose build
+        run: |
+          export GITHUB_TOKEN=${{ secrets.GH_PAT }}
+          export IMAGE_TAG=${{ env.sha_short }}
+          docker compose build
 
       # Docker 컨테이너 배포
       # 새로 빌드된 이미지를 사용하여 컨테이너를 실행(배포)
       - name: Deploy with Docker Compose
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          # 환경 변수로 이미지 태그 전달
-          IMAGE_TAG: ${{ env.sha_short }}
-        run: docker compose up -d
+        run: |
+          export GITHUB_TOKEN=${{ secrets.GH_PAT }}
+          export IMAGE_TAG=${{ env.sha_short }}
+          docker compose up -d
