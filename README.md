@@ -79,7 +79,7 @@
 2.  `Repository secrets` 섹션에서 **`New repository secret`** 버튼을 클릭하여 아래 3개의 Secret을 생성합니다.
 
     | Secret 이름 | 값 | 설명 |
-        | :--- | :--- | :--- |
+    | :--- | :--- | :--- |
     | `DOCKERHUB_USERNAME` | 본인의 Docker Hub 아이디 | Docker Hub 로그인 시 사용됩니다. |
     | `DOCKERHUB_TOKEN` | Docker Hub Access Token | Docker Hub 로그인 시 비밀번호 대신 사용됩니다. ([여기서 발급](https://hub.docker.com/settings/security)) |
     | `GH_PAT` | 위의 "사전 준비"에서 발급받은 GitHub PAT | Docker 이미지 빌드 시 환경 변수로 주입됩니다. |
